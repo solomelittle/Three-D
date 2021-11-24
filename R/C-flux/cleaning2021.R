@@ -49,7 +49,7 @@ if(file.exists(zipFile)){
 }
 
 #importing fluxes data
-location <- "data/c-flux/summer_2021/rawData" #location of datafiles
+location <- "data/c-flux/summer_2021" #location of datafiles
 
 fluxes <-
   dir_ls(location, regexp = "*CO2*") %>% 
@@ -87,7 +87,7 @@ co2_fluxes <- match.flux(fluxes,record)
 cutting <- read_csv("data/c-flux/summer_2021/Three-D_cutting_2021.csv", na = "", col_types = "dtt")
 
 co2_cut <- co2_fluxes %>% 
-  left_join(cutting, by = "ID") %>% 
+  left_join(cutting, by = c("fluxID" = "ID")) %>% 
   mutate(
     start_cut = ymd_hms(paste(date, .$start_cut)),
     end_cut = ymd_hms(paste(date, .$end_cut))
