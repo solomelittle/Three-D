@@ -60,10 +60,17 @@ for i in range(len(new_data)):
     new_data[i][:,1] = pd.to_datetime(new_data[i][:,1])
 # if I want to isolate the data with id number 100 or 200 and look at the concentrations then
 time_delta = np.array(len(id_list))
-
+new_data[:][:,1] = pd.to_datetime(new_data[:][:,1]
+                                  
+new_data [:]
 for i in range(len(id_list)):
   time_delta[i,:]  = (new_data[i][:,1] - new_data[i][:,1].min())/ np.timedelta64(1,'s')
-  
+  # try to make date ordinal thing work for you
+df = pd.DataFrame(list, columns=['date', 'value'])
+df.date =pd.to_datetime(df.date)
+df['date_ordinal'] = pd.to_datetime(df['date']).map(dt.datetime.toordinal)
+slope, intercept, r_value, p_value, std_err = stats.linregress(df['date_ordinal'], df['value'])
+#
 conc100s = new_data[0][:,1:2]
 conc200s = new_data[1][:,1:2]
 print(conc100s)
