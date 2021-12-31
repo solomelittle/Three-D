@@ -4,9 +4,6 @@ library(fs)
 source("R/Load packages.R")
 # source("https://raw.githubusercontent.com/jogaudard/common/master/fun-fluxes.R")
 
-# import the soil respiration collar volume and area 
-collar <- read_csv("data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv", col_select = c("turfID","area_m2", "volume_L"), na = c(""), col_types = "cicnncnn")  
-
 #function to match the fluxes with the record file
 match.flux <- function(raw_flux, field_record){
   co2conc <- full_join(raw_flux, field_record, by = c("datetime" = "start"), keep = TRUE) %>% #joining both dataset in one
@@ -18,15 +15,21 @@ match.flux <- function(raw_flux, field_record){
     filter(
       datetime <= end
       & datetime >= start) #%>% #cropping the part of the flux that is after the End and before the Start
-
-  
   return(co2conc)
 }
-
 
 measurement <- 210 #the length of the measurement taken on the field in seconds
 startcrop <- 10 #how much to crop at the beginning of the measurement in seconds
 endcrop <- 40 #how much to crop at the end of the measurement in seconds
+
+# Download data from OSF here (see Joseph's scripts)
+
+# Unzip files
+zipFile <- "data/c-flux/summer_2021/Three-D_cflux_2021.zip"
+if(file.exists(zipFile)){
+  outDir <- "data/c-flux/summer_2021"
+  unzip(zipFile, exdir = outDir)
+}
 
 #importing fluxes data
 location <- "data/c-flux/summer_2021" #location of datafiles
@@ -56,7 +59,10 @@ record <- read_csv("data/c-flux/summer_2021/Three-D_field-record_2021.csv", na =
     start_window = start + startcrop, #cropping the start
     end_window = end - endcrop #cropping the end of the measurement
   ) 
-  
+
+# import the soil respiration collar volume
+collar <- read_csv("data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv", na = c(""), col_types = "cctDfc") %>% 
+
 #matching the CO2 concentration data with the turfs using the field record
 co2_fluxes <- match.flux(fluxes,record)
 
@@ -89,7 +95,7 @@ co2_cut <- co2_cut %>% mutate(
     fluxID == 25 & datetime %in% c(ymd_hms("2021-06-04T14:23:30"):ymd_hms("2021-06-04T14:23:50")) ~ "cut",
     fluxID == 26 & datetime %in% c(ymd_hms("2021-06-04T14:17:23"):ymd_hms("2021-06-04T14:17:30")) ~ "cut",
     fluxID == 248 & datetime %in% c(ymd_hms("2021-06-22T14:19:45"):ymd_hms("2021-06-22T14:19:55")) ~ "cut",
-    fluxID == 1350 & datetime %in% c(ymd_hms("2021-09-09T15:59:05"):ymd_hms("2021-09-09T15:59:15")) ~ "cut",
+    # fluxID ==  & datetime %in%  ~ "cut",
     # fluxID ==  & datetime %in%  ~ "cut",
     # fluxID ==  & datetime %in%  ~ "cut",
     TRUE ~ "keep"
@@ -97,14 +103,14 @@ co2_cut <- co2_cut %>% mutate(
   cut = as_factor(cut)
 )
 
-theme_set(theme_grey(base_size = 5)) 
+theme_set(theme_grey(base_size = 5))
 
 filter(co2_cut, type == "SoilR") %>% # date == "2021-06-04"
   ggplot(aes(x = datetime, y = CO2, color = cut)) +
   geom_line(size = 0.2, aes(group = fluxID)) +
   scale_x_datetime(date_breaks = "1 min", minor_breaks = "10 sec", date_labels = "%e/%m \n %H:%M") +
   facet_wrap(vars(fluxID), scales = "free") #+
-#ggsave("threed_2021_detail_1.png", height = 40, width = 80, units = "cm")
+  #ggsave("threed_2021_detail_1.png", height = 40, width = 80, units = "cm")
 # 
 # filter(co2_cut, campaign == 2) %>% 
 #   ggplot(aes(x = datetime, y = CO2, color = cut)) +
@@ -151,13 +157,13 @@ filter(co2_cut, type == "SoilR") %>% # date == "2021-06-04"
 #   # scale_x_date(date_labels = "%H:%M:%S") +
 #   facet_wrap(vars(fluxID), ncol = 30, scales = "free") +
 #   ggsave("threed_2021_detail_tempsoil_2.png", height = 40, width = 80, units = "cm")
-filter(co2_cut, type == "SoilR") %>%
-  ggplot(aes(x = datetime, y = temp_soil)) +
-  geom_line(size = 0.2, aes(group = fluxID)) +
-  scale_x_datetime(date_breaks = "1 min", minor_breaks = "10 sec", date_labels = "%e/%m \n %H:%M") +
-  # scale_x_date(date_labels = "%H:%M:%S") +
-  facet_wrap(vars(fluxID), scales = "free") #+
-  #ggsave("threed_2021_detail_tempsoil.png", height = 60, width = 126, units = "cm")
+
+# ggplot(co2_cut, aes(x = datetime, y = temp_soil)) +
+#   geom_line(size = 0.2, aes(group = ID)) +
+#   scale_x_datetime(date_breaks = "1 min", minor_breaks = "10 sec", date_labels = "%e/%m \n %H:%M") +
+#   # scale_x_date(date_labels = "%H:%M:%S") +
+#   facet_wrap(vars(ID), ncol = 40, scales = "free") +
+#   ggsave("threed_2021_detail_tempsoil.png", height = 60, width = 126, units = "cm")
 
 
 
@@ -170,6 +176,7 @@ co2_cut <- co2_cut %>%
       TRUE ~ temp_soil
     )
   )
+
 
 #PAR: same + NA for soilR and ER
 
@@ -213,21 +220,18 @@ co2_cut <- co2_cut %>%
 
 #first, a function to calculate fluxes
 flux.calc <- function(co2conc, # dataset of CO2 concentration versus time (output of match.flux)
-                      # soil collar = pipe D cm, depth above *soil* cm 
-                      #volume=chamber volume + pi*(soil collar/2)^2*depth above
-                    #  chamber_volume = 24.5, # volume of the flux chamber in L, default for Three-D chamber (25x24.5x40cm)
+                    # soil collar = pipe D cm, depth above *soil* cm 
+                    #volume=chamber volume + pi*(soil collar/2)^2*depth above
+                      chamber_volume = 24.5, # volume of the flux chamber in L, default for Three-D chamber (25x24.5x40cm)
                       tube_volume = 0.075, # volume of the tubing in L, default for summer 2020 setup
-                     # collar_volume = #0.0403, # average
-                      atm_pressure = 1 # atmoshperic pressure, assumed 1 atm
-                      #plot_area = 0.0625 # area of the plot in m^2, default for Three-D
-                      #collar_area = 0.0304 # calculated from soil collar dimensions average
+                 #     collar_volume = 0.1 # placeholder
+                      atm_pressure = 1, # atmoshperic pressure, assumed 1 atm
+                      plot_area = 0.0625 # area of the plot in m^2, default for Three-D
 )
 {
   R = 0.082057 #gas constant, in L*atm*K^(-1)*mol^(-1)
- # vol = chamber_volume + tube_volume
-  #vol = case_when(
-   # ) 
-  # for type == "SoilR"
+  vol = chamber_volume + tube_volume
+ # for type == "SoilR"
   #  volume = vol + collar_volume
   fluxes_final <- co2conc %>% 
     # group_by(ID) %>% 
@@ -252,27 +256,28 @@ flux.calc <- function(co2conc, # dataset of CO2 concentration versus time (outpu
            # & r.squared >= 0.7 #keeping only trendline with an r.squared above or equal to 0.7. Below that it means that the data are not good quality enough
            # & p.value < 0.05 #keeping only the significant fluxes
     ) %>% 
-    left_join(co2conc, collar, by = c("turfID" = "turfID"))
     # select(ID, Plot_ID, Type, Replicate, Remarks, Date, PARavg, Temp_airavg, r.squared, p.value, estimate, Campaign) %>% #select the column we need, dump the rest
-    distinct(fluxID, turfID, type, date, PARavg, temp_airavg, temp_soilavg, r.squared, p.value, estimate, campaign, area_m2, volume_L, .keep_all = TRUE) %>%  #remove duplicate. Because of the nesting, we get one row per Datetime entry. We only need one row per flux. Select() gets rid of Datetime and then distinct() is cleaning those extra rows.
+    distinct(fluxID, turf_ID, type, commments, date, PARavg, temp_airavg, temp_soilavg, r.squared, p.value, estimate, campaign, .keep_all = TRUE) %>%  #remove duplicate. Because of the nesting, we get one row per Datetime entry. We only need one row per flux. Select() gets rid of Datetime and then distinct() is cleaning those extra rows.
     #calculate fluxes using the trendline and the air temperature
-    mutate(flux = (estimate * atm_pressure *(tube_volume + volume_L)/(R * temp_airavg * area_m2)) #gives flux in micromol/s/m^2
+    mutate(flux = (estimate * atm_pressure * vol)/(R * temp_airavg * plot_area) #gives flux in micromol/s/m^2
            *3600 #secs to hours
            /1000 #micromol to mmol
     ) %>%  #flux is now in mmol/m^2/h, which is more common
-    select(datetime, fluxID, turfID, type, date, PARavg, temp_airavg, temp_soilavg, r.squared, p.value, nobs, flux, campaign, area_m2, volume_L)
+    select(datetime, fluxID, turf_ID, type, comments, date, PARavg, temp_airavg, temp_soilavg, r.squared, p.value, nobs, flux, campaign)
+  
   return(fluxes_final)
+  
 }
-
 co2_fluxes_soil <- co2_cut %>% #co2_fluxes not co2_cut
   filter(
     type == "SoilR"
   )
 
-fluxes2021 <- flux.calc(co2_fluxes_soil) %>% 
- rename(
-   date_time = datetime
- )
+fluxes2021 <- flux.calc(co2_fluxes_soil)# %>% 
+#  rename(
+#    date_time = datetime,
+#    turfID = turf_ID
+#  )
 
 write_csv(fluxes2021, "data/c-flux/summer_2021/Three-D_c-flux_2021.csv")
 
