@@ -29,7 +29,7 @@ id_list = [27,42,47,72,112,121,158,176,201,210,231,256,292,305,308,339,363,385,4
          587,632,635,666,669,693,702,739,756,793,796,827,830,874,897,908,923,962,985,1007,1012,1031,1053,
          1159,1162,1193,1196,1246,1274,1277,1294,1312,1317,1332,1333,1350,1374,1381]
 
-data = Rfielddata[["datetime", "CO2", "temp_air", "turfID", "campaign", "fluxID", "campaign", "area_m2", "volume_L"]]
+data = Rfielddata[["datetime", "CO2", "temp_air", "temp_soil", "turfID", "campaign", "fluxID", "area_m2", "volume_L"]]
 # create a new data array that has the number of entries = number of id numbers 
 new_data = np.zeros((len(id_list)), dtype = list)
 
@@ -54,24 +54,37 @@ for i in range(len(new_data)):
     new_data[i] = np.array(new_data[i])
 
 
-# %% Slope calculation
+# %% Slope calculation and temp. adjustment
+
+temp_airavg = np.zeros(len(new_data))
+temp_soilavg = np.zeros(len(new_data))
 
 for i in range(len(new_data)):
     dates = pd.to_datetime(new_data[i][:,0])
     tempdates = (dates[:]-dates[:].min())/np.timedelta64(1,'s')
     new_data[i][:,0] = tempdates
+    new_data[i][:,2] = new_data[i][:,2]+273.15
 
-slopelist=np.zeros(len(new_data))
-# 60 NEEDS FIXING
-for i in range(len(new_data)):
+# slopelist=np.zeros(len(new_data))
+# turfIDlist=np.zeros(len(new_data),dtype = object)
+# # 60 NEEDS FIXING
+# for i in range(len(new_data)):
+#     slopelist[i] = np.polyfit(new_data[i][:,0].astype(float), new_data[i][:,1].astype(float),1)[0]
+#     temp_airavg[i] = sum(new_data[i][:,2])/len(new_data[i][:,2])
+#     temp_soilavg[i] = sum(new_data[i][:,3])/len(new_data[i][:,3])
+#     turfIDlist[i] = new_data[i][1,4]
+
+# #%%
+
+# #def soil_respiration(slopelist):
+# atm_p = 1 # atmospheric pressurre, assumed 1 atm
+# R = 0.082057 #gas constant, in L*atm*K^(-1)*mol^(-1)
+# tube_vol = 0.075 # tube volume in L
+# fluxes = np.zeros(len(new_data))
+# for i in range(len(new_data)):
+#     fluxes[i] = (slopelist[i] * atm_p *(tube_vol + new_data[i][1,-1])/(R * temp_airavg[i] * new_data[i][1,7]))
     
-    slopelist[i] = np.polyfit(new_data[i][:,0].astype(float), new_data[i][:,1].astype(float),1)[0]
-
-#%%
-
-def soil_respiration(m):
-    atm_pressure = 1 # atmospheric pressurre, assumed 1 atm
-    R = 0.082057 #gas constant, in L*atm*K^(-1)*mol^(-1)
-   # new_data[:,2] = new_data[:,2]+273.15 # converting to Kelvin for flux calc FIX THIS THIS IS POORLY INDEXED
-    flux = (slope * atm_pressure *(tube_volume + volume_L)/(R * temp_airavg * area_m2)
-
+#  #   flux w temp_soil and moisture & fluxID
+    
+# plotgrid = np.append(turfIDlist,slopelist,temp_soilavg)
+# plot
