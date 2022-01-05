@@ -98,8 +98,8 @@ plotarray = np.transpose(plotarray)
 
 #avgfluxes = sum(plotarray[:,1])/len(plotarray[:,1])
 #avgfluxes1 = st.mean(plotarray[:,1])
-# Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
 
+# Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
 plotarray_log=np.delete(plotarray,-4,0)
 plotarray_log=np.delete(plotarray_log,51,0)
 plotarray_log=np.delete(plotarray_log,10,0)
