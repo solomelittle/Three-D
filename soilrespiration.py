@@ -28,7 +28,7 @@ data = Rfielddata[["datetime", "CO2", "temp_air", "temp_soil", "turfID", "campai
 # FluxIDs corresponding to type SoilR
 id_list = [27,42,47,72,112,121,158,176,201,210,231,256,292,305,308,339,363,385,419,439,466,477,548,561,580,
          587,632,635,666,669,693,702,739,756,793,796,827,830,874,897,908,923,962,985,1007,1012,1031,1053,
-         1159,1162,1193,1196,1246,1274,1277,1294,1312,1317,1332,1333,1350,1374,1381]
+         1159,1162,1193,1196,1246,1274,1277,1294,1312,1317,1332,1333,1350,1374,1381,1382]
 
 new_data = np.zeros((len(id_list)), dtype = list) # New data array that has the number of entries = number of FluxIDs
 
@@ -94,20 +94,23 @@ for i in range(len(new_data)): # Flux for each FluxID
 plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),destsitelist.astype(object),origsitelist.astype(object)])
 plotarray = np.transpose(plotarray)
 
+#%% Standardize for temperature
+
+# TO DO NEXT
+
 #%% Statistics/outlier removal
 
-#avgfluxes = sum(plotarray[:,1])/len(plotarray[:,1])
-#avgfluxes1 = st.mean(plotarray[:,1])
+# #avgfluxes = sum(plotarray[:,1])/len(plotarray[:,1])
+# #avgfluxes1 = st.mean(plotarray[:,1])
 
-# Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
-plotarray_log=np.delete(plotarray,-4,0)
-plotarray_log=np.delete(plotarray_log,51,0)
-plotarray_log=np.delete(plotarray_log,10,0)
+# # Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
+# plotarray_log=np.delete(plotarray,-4,0)
+# plotarray_log=np.delete(plotarray_log,51,0)
+# plotarray_log=np.delete(plotarray_log,10,0)
 
-m3, b3 = np.polyfit(plotarray_log[:,2].astype(float), np.log(plotarray_log[:,1].astype(float)), 1, w=np.sqrt(plotarray_log[:,1].astype(float)))
-for i in range(len(plotarray_log)):
-    plotarray_log[i,1]=math.exp(m3*plotarray_log[i,2]+b3)
-
+# m3, b3 = np.polyfit(plotarray_log[:,2].astype(float), np.log(plotarray_log[:,1].astype(float)), 1, w=np.sqrt(plotarray_log[:,1].astype(float)))
+# for i in range(len(plotarray_log)):
+#     plotarray_log[i,1]=math.exp(m3*plotarray_log[i,2]+b3)
 #%% Plotting
 
 # Flux for each 4 points of TurfID coloured by temp. could separate into lia joa and vik
