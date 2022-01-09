@@ -17,10 +17,10 @@ import scipy.stats as st
 import math
 
 # %% Read csv
-collar_dim  = pd.read_csv('data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv') #read csv, need soil collar volume and area (already calculated in csv)
-soilmoisture = pd.read_csv('data_cleaned/Three-D_soil-moisture_2021.csv')
-metaturfID = pd.read_csv('data_cleaned/Three-D_metaturfID.csv')
-Rfielddata = pd.read_csv('data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # Importing csv -> cut vs. keep cleaning preliminarily done in R. 
+collar_dim  = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv') #read csv, need soil collar volume and area (already calculated in csv)
+soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
+metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_metaturfID.csv')
+Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # Importing csv -> cut vs. keep cleaning preliminarily done in R. 
 Rfielddata = pd.merge(Rfielddata, collar_dim, on="turfID")
 Rfielddata = Rfielddata[Rfielddata.cut != 'cut'] # Removing "cut" entries 
 data = Rfielddata[["datetime", "CO2", "temp_air", "temp_soil", "turfID", "campaign", "fluxID", "area_m2", "volume_L", "destSiteID"]] # Removing useless columns
