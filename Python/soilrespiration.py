@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 22 19:12:51 2021
-
 @author: emmalittle
 " Additional Thesis Nov 2021-January 2022, in collaboration with THREE-D Project (University of Bergen)
   This script calculates the carbon flux from carbon dioxide concentrations over time for bare soil collars,
@@ -18,7 +17,7 @@ import math
 
 # %% Read csv
 collar_dim  = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv') #read csv, need soil collar volume and area (already calculated in csv)
-soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
+#soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
 metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_metaturfID.csv')
 Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # Importing csv -> cut vs. keep cleaning preliminarily done in R. 
 Rfielddata = pd.merge(Rfielddata, collar_dim, on="turfID")
@@ -58,6 +57,7 @@ slopelist=np.zeros(len(new_data)) # Slope array for each FluxID
 turfIDlist=np.zeros(len(new_data),dtype = tuple) # TurfID array in suitable type, useful for plotting later
 campaignlist=np.zeros((len(new_data)),dtype = tuple) # Original [:,0] and destination [:,1] SiteID
 treatmentlist=np.zeros((len(new_data)),dtype = tuple) # Original [:,0] and destination [:,1] SiteID
+sitelist=np.zeros((len(new_data)),dtype = tuple)
 
 # Timestamp to elapsed seconds, temperature to Kelvin
 for i in range(len(new_data)): # Converting time to elapsed seconds for slope calculation 
@@ -72,6 +72,7 @@ for i in range(len(new_data)):
     temp_airavg[i] = sum(new_data[i][:,2])/len(new_data[i][:,2])
     temp_soilavg[i] = sum(new_data[i][:,3])/len(new_data[i][:,3])
     turfIDlist[i] = new_data[i][1,4]
+    sitelist[i] = new_data[i] [1,9]
     campaignlist[i] = new_data[i][1,5] # Destination site
     # Original site (if it is a warming plot and is at lower elev. then move it up)
     if 'W' in str(new_data[i][:,4]):
@@ -92,19 +93,25 @@ for i in range(len(new_data)): # Flux for each FluxID
     fluxes[i] = (3600/1000)*(slopelist[i] * atm_p *(tube_vol + new_data[i][1,-2])/(R * temp_airavg[i] * new_data[i][1,7])) # f=slope*pressure*(tube volume + above-ground-collar volume)/(R*air temp*area)
     
 # Array for plotting: TurfID, fluxes, avg. soil temp and moisture
-plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object)])
+plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object),sitelist.astype(object)])
 plotarray = np.transpose(plotarray)
 
 #%% Moisture
 
 # TO DO NEXT
-j = np.linspace(0,len(soilmoisture),(len(soilmoisture)//4),dtype=int)
+#j = np.linspace(0,len(soilmoisture),(len(soilmoisture)//4),dtype=int)
 #soilmoisture.insert(6, "Avg_moisture",0)
-soilmoisture ['destsiteID'] = np.where(metaturfID['turfID']==soilmoisture['turfID'], metaturfID['destsiteID'])
+#soilmoisture ['destsiteID'] = np.where(metaturfID['turfID']==soilmoisture['turfID'], metaturfID['destsiteID'])
 #for i in range(len(soilmoisture)):
  #   if soilmoisture.iloc[i,0]
-
-#soilmoisture[1:4,2]
+avg_soilmoisture = [[81.48625, 33.50474684,6.82625 ],
+       [45.629375, 27.186875, 16.6125],
+       [48.838125, 38.0503125 , 17.4475],
+       [34.66375, 12.0246875,  4.795625]] # from soilmoistureanalysis, Lia/Joa/Vik
+campaigns = [1,2,3,4]
+for i in range(len(campaigns)): # fix this
+    for j in range(len(plotarray)):
+        if plotarray[i,3]==1 and plotarray [i,]
 
 #%% Statistics/outlier removal
 
@@ -171,3 +178,15 @@ plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Original Site')
 
 # Moisture
+fig6 = plt.figure('Temp. corrected flux vs. moisture', figsize = (5,4)) # NO I WANT TO PLOT LIA FLUX VS MOISTURE, JO FLUX VS MOISTURE, VIK FLUX VS MOISTURE
+for i in range(len(plotarray_fit)):
+    if plotarray_fit [i,5] == 'Lia':
+        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='red')
+    elif plotarray_fit [i,5] == 'Joa':
+        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='blue')
+    elif plotarray_fit [i,5] == 'Vik':
+        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='green')
+plt.ylabel('CO2 Flux (mmol/m2/h)')
+plt.xlabel('Campaign') 
+plt.xticks([1,2,3,4])
+plt.savefig('SoilRespiration_campaign.png')

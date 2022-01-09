@@ -30,30 +30,40 @@ for i in range(len(soilmoisture)): # Looping over each data point
             
 #%%
         
-sum_moisture_Lia=0
-L=0
-sum_moisture_Joa=0
-J=0
-sum_moisture_Vik=0
-V=0
+
+campaigns=np.zeros((4,3))
 # need to do per campaign average, not total
-for i in range(len(soilmoisture)):
-    if soilmoisture.iloc[i,6]=='Lia':
-        sum_moisture_Lia=soilmoisture.iloc[i,2]+sum_moisture_Lia
-        L=L+1
-    elif soilmoisture.iloc[i,6]=='Joa':
-        sum_moisture_Joa=soilmoisture.iloc[i,2]+sum_moisture_Joa
-        J=J+1
-    else:
-        sum_moisture_Vik=soilmoisture.iloc[i,2]+sum_moisture_Vik
-        V=V+1
+def site_avg(c, soilmoisture):
+    sum_moisture_Lia=0
+    L=0
+    sum_moisture_Joa=0
+    J=0
+    sum_moisture_Vik=0
+    V=0
+    for i in range(len(soilmoisture)):
+        if soilmoisture.iloc[i,6]=='Lia' and int(soilmoisture.iloc[i,4])==c:
+            sum_moisture_Lia=soilmoisture.iloc[i,2]+sum_moisture_Lia
+            L=L+1
+        elif soilmoisture.iloc[i,6]=='Joa' and str(soilmoisture.iloc[i,5]) == "nan" and soilmoisture.iloc[i,4]==c:
+            sum_moisture_Joa=soilmoisture.iloc[i,2]+sum_moisture_Joa
+            J=J+1
+        elif soilmoisture.iloc[i,6]=='Vik' and soilmoisture.iloc[i,4]==c:
+            sum_moisture_Vik=soilmoisture.iloc[i,2]+sum_moisture_Vik
+            V=V+1
+    avg_moisture = [(sum_moisture_Lia/L),(sum_moisture_Joa/J),(sum_moisture_Vik/V)]
+    return avg_moisture
 
-avg_moisture_Lia=sum_moisture_Lia/L
-avg_moisture_Joa=sum_moisture_Joa/J
-avg_moisture_Vik=sum_moisture_Vik/V
-            
-            
-            
+for i in range(1,len(campaigns)+1):
+    campaigns[i-1,:] = site_avg(i,soilmoisture)
+#avg_moisture_Joa=sum_moisture_Joa/J
+#avg_moisture_Vik=sum_moisture_Vik/V
 
-     #   elif current_point["turfID"] == id_list[j] and current_point["tea_type"]=='red': # same but for red
-       #     new_reddata[j].append(current_point)
+fig1 = plt.figure('Moisture', figsize = (5,4))
+plt.scatter([1,2,3,4], campaigns[:,0],c='red') # LIa
+plt.scatter([1,2,3,4], campaigns[:,1],c='blue') # Joa
+plt.scatter([1,2,3,4], campaigns[:,2],c='green') #Vik
+plt.ylabel('Average Soil Moisture (%)')
+plt.xlabel('Campaign') 
+#plt.xticks([1,2,3,4])
+plt.savefig('Soilmoisture_campaign.png')
+            
