@@ -82,18 +82,37 @@ a_r = H_r*(np.ones(len(new_reddata)) - S)
 for i in range(len(new_reddata)):
     k_r[i] = -np.log(a_r[i]*(new_reddata[i][0][-2]-(1-a_r[i])))/new_reddata[i][0][15]
     
-plotarray = np.vstack([treatment_list, k_r.astype(float), k_g.astype(float)])
-plotarray = plotarray != 'NaN'
+#%% 
+orig_site = np.zeros(len(new_reddata)).astype(tuple)
+for i in range(len(new_reddata)):
+    orig_site[i]=new_reddata[i][0][0]
+plotarray = np.vstack([treatment_list,orig_site.astype(tuple), k_r.astype(float), k_g.astype(float), S.astype(float)])
+plotarray = np.delete(plotarray,(1,8,10,15),1)
+plotarray = np.transpose(plotarray)
 #%%
 
 # S and k by treatment
-fig1=plt.figure('S and k by treatment')
-plt.scatter(plotarray[:,0], plotarray[:,1], c = "red")
+fig1=plt.figure('k by treatment',figsize=(5,4))
+for i in range(len(plotarray)):
+    if plotarray[i,0]=='A':
+        plt.scatter(plotarray[i,1], plotarray[i,2], marker='^',c = "red")
+        plt.scatter(plotarray[i,1], plotarray[i,3],marker='^', c = "green")
+    else:
+        plt.scatter(plotarray[i,1], plotarray[i,2], marker='o',c = "red")
+        plt.scatter(plotarray[:,1], plotarray[:,3],marker='o', c = "green")
 #plt.scatter(str(treatment_list), k_r, c = "red")
 #plt.scatter(tuple(treatment_list), k_g, c = "green")
 plt.ylabel('k (d^-1)')
-plt.xlabel('Treatment') 
-#plt.xticks(['A','W'])
+plt.xlabel('Site orig') 
+#plt.yticks(np.linspace(0,100,10))
 plt.savefig('Soildecomposition_k_treatment.png')
 
+fig2=plt.figure('S by treatment')
+plt.scatter(plotarray[:,0], plotarray[:,3].astype(float), c = "black")
+#plt.scatter(str(treatment_list), k_r, c = "red")
+#plt.scatter(tuple(treatment_list), k_g, c = "green")
+plt.ylabel('S')
+plt.xlabel('Treatment') 
+#plt.yticks(np.linspace(0,100,10))
+plt.savefig('Soildecomposition_S_treatment.png')
 
