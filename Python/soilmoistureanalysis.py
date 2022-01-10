@@ -30,7 +30,7 @@ for i in range(len(soilmoisture)): # Looping over each data point
             
 #%%
         
-
+nr = [1,2,3,4]
 campaigns=np.zeros((4,3))
 # need to do per campaign average, not total
 def site_avg(c, soilmoisture):
@@ -59,11 +59,10 @@ for i in range(1,len(campaigns)+1):
 #avg_moisture_Vik=sum_moisture_Vik/V
 
 fig1 = plt.figure('Moisture', figsize = (5,4))
-plt.scatter([1,2,3,4], campaigns[:,0],c='red') # LIa
-plt.scatter([1,2,3,4], campaigns[:,1],c='blue') # Joa
-plt.scatter([1,2,3,4], campaigns[:,2],c='green') #Vik
+plt.scatter(nr, campaigns[:,0],c='red') # LIa
+plt.scatter(nr, campaigns[:,1],c='blue') # Joa
+plt.scatter(nr, campaigns[:,2],c='green') #Vik
 plt.ylabel('Average Soil Moisture (%)')
 plt.xlabel('Campaign') 
-#plt.xticks([1,2,3,4])
-plt.savefig('Soilmoisture_campaign.png')
+plt.savefig('Soilmoisture_campaign_rgb.png')
             

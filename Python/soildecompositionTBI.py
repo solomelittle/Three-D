@@ -18,13 +18,15 @@ import math
 
 #%% Reading csv and initializing
 
-decompositiondata = pd.read_csv('data_cleaned/THREE-D_clean_decomposition_fall_2021.csv') # read csv with tea bag info
-Rfielddata = pd.read_csv('data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # read csv with turfID and fluxID filtered for type SoilR
+decompositiondata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/THREE-D_clean_decomposition_fall_2021.csv') # read csv with tea bag info
+Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # read csv with turfID and fluxID filtered for type SoilR
+metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/Three-D_metaturfID.csv')
+
 m,n=np.shape(decompositiondata) # dimensions for easy sizing later arrays
 
 id_list = ['125 WN7C 183','126 AN7C 126','147 WN9C 194','149 AN9C 149','3 WN1C 85','4 AN1C 4','40 WN10N 119','41 WN7C 122',
            '43 AN7C 43','69 WN9C 150','7 AN1N 7','70 AN9C 70','81 AN1C 81','85 WN1C 162','87 WN1N 164','88 AN1N 88'] # Corresponding to SoilR. Determined simply by set(Rfielddata['turfID']). 
-
+treatment_list = [['W','NaN','W','A','W','A','W','W','NaN','W','NaN','A','A','W','W','A']]
 new_greendata = np.zeros((len(id_list)), dtype = list) # decomposition data only for green tea
 new_reddata = np.zeros((len(id_list)), dtype = list) # decomposition data only for rooibos tea
 NaN_bags = np.ones(n)*999 # marker for missing data
@@ -54,6 +56,7 @@ for i in range(len(new_reddata)):
 #%% Green Tea - S
 # a is labile, 1-a is recalcitrant. Because green tea is fast to decompose we get recalcitrant info from this.
 a_g = np.zeros(len(new_greendata)) # fraction of green tea actually decomposed
+k_g =  np.zeros(len(new_reddata)) # decomposition rate [d^-1], green tea
 S = np.zeros(len(new_greendata)) # stabilization factor (Keuskamp et al. 2013)
 
 H_g = 0.842*np.ones(len(new_greendata)) # Hydrolyzeable (chemically decomposable) fraction of green tea (from Quantifying Litter Decomposition Rates on a Semi-Intensive Green Roof, Lasalle 2019)
@@ -66,12 +69,31 @@ for i in range(len(new_greendata)):
 
 S = np.ones(len(new_greendata))-(a_g/H_g) # This is the equation for S = 1-a_g/H_g
 
+for i in range(len(new_greendata)):
+    k_g[i] = -np.log(a_g[i]*(new_greendata[i][0][-2]-(1-a_g[i])))/new_greendata[i][0][15]
+    
+
 #%% Rooibos Tea - k
 a_r = np.zeros(len(new_reddata)) # fraction of rooibos tea actually decomposed
-k =  np.zeros(len(new_reddata)) # decomposition rate [d^-1], based on rooibos tea because it decomposes slowly
+k_r =  np.zeros(len(new_reddata)) # decomposition rate [d^-1], based on rooibos tea because it decomposes slowly
 H_r = 0.552*np.ones(len(new_reddata)) # placeholder, hydrolyzeable fraction rooibos tea 
 a_r = H_r*(np.ones(len(new_reddata)) - S)
 # Weight at time t = ae^(-kt)+(1-a)
 for i in range(len(new_reddata)):
-    k[i] = -np.log(a_r[i]*(new_reddata[i][0][-2]-(1-a_r[i])))/new_reddata[i][0][15]
+    k_r[i] = -np.log(a_r[i]*(new_reddata[i][0][-2]-(1-a_r[i])))/new_reddata[i][0][15]
+    
+plotarray = np.vstack([treatment_list, k_r.astype(float), k_g.astype(float)])
+plotarray = plotarray != 'NaN'
+#%%
+
+# S and k by treatment
+fig1=plt.figure('S and k by treatment')
+plt.scatter(plotarray[:,0], plotarray[:,1], c = "red")
+#plt.scatter(str(treatment_list), k_r, c = "red")
+#plt.scatter(tuple(treatment_list), k_g, c = "green")
+plt.ylabel('k (d^-1)')
+plt.xlabel('Treatment') 
+#plt.xticks(['A','W'])
+plt.savefig('Soildecomposition_k_treatment.png')
+
 

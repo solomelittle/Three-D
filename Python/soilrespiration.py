@@ -17,15 +17,13 @@ import math
 
 # %% Read csv
 collar_dim  = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilR-chambers-size.csv') #read csv, need soil collar volume and area (already calculated in csv)
-#soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
-metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_metaturfID.csv')
 Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # Importing csv -> cut vs. keep cleaning preliminarily done in R. 
 Rfielddata = pd.merge(Rfielddata, collar_dim, on="turfID")
 Rfielddata = Rfielddata[Rfielddata.cut != 'cut'] # Removing "cut" entries 
-data = Rfielddata[["datetime", "CO2", "temp_air", "temp_soil", "turfID", "campaign", "fluxID", "area_m2", "volume_L", "destSiteID"]] # Removing useless columns
 
  #%% Organizing new cleaned array by FluxID
  
+data = Rfielddata[["datetime", "CO2", "temp_air", "temp_soil", "turfID", "campaign", "fluxID", "area_m2", "volume_L", "destSiteID"]] # Removing useless columns
 # FluxIDs corresponding to type SoilR
 id_list = [27,42,47,72,112,121,158,176,201,210,231,256,292,305,308,339,363,385,419,439,466,477,548,561,580,
          587,632,635,666,669,693,702,739,756,793,796,827,830,874,897,908,923,962,985,1007,1012,1031,1053,
@@ -39,7 +37,7 @@ for i in range(len(data)): # Looping over each data point
     current_point = data.iloc[i,:] # Label the current data point being inspected
 
     for k in range(len(id_list)):     # Looping over the possible FluxIDs
-        if current_point[6] == id_list[k]:  # if the FluxID of the current data point is equal to some k, add it to the k list
+        if current_point["fluxID"] == id_list[k]:  # if the FluxID of the current data point is equal to some k, add it to the k list
             new_data[k].append(current_point)
 
 # Restructure the list of arrays into a bigger array
@@ -50,14 +48,15 @@ for i in range(len(new_data)):
 new_data[60]=np.delete(new_data[60],slice(0,15),0) # First 15 seconds of FluxID 1350
 
 # %% CO2 flux slope calculation, adjusting temperature units C -> K
+
 # Initializing
 temp_airavg = np.zeros(len(new_data)) # Avg. air temperature for each FluxID
 temp_soilavg = np.zeros(len(new_data)) # Avg. soil temperature for each FluxID
 slopelist=np.zeros(len(new_data)) # Slope array for each FluxID
 turfIDlist=np.zeros(len(new_data),dtype = tuple) # TurfID array in suitable type, useful for plotting later
-campaignlist=np.zeros((len(new_data)),dtype = tuple) # Original [:,0] and destination [:,1] SiteID
-treatmentlist=np.zeros((len(new_data)),dtype = tuple) # Original [:,0] and destination [:,1] SiteID
-sitelist=np.zeros((len(new_data)),dtype = tuple)
+campaignlist=np.zeros((len(new_data)),dtype = tuple) # 1,2,3,4: To be treated as a time series
+treatmentlist=np.zeros((len(new_data)),dtype = tuple) # Ambient or Warming
+sitelist=np.zeros((len(new_data)),dtype = tuple) # Destination SiteID
 
 # Timestamp to elapsed seconds, temperature to Kelvin
 for i in range(len(new_data)): # Converting time to elapsed seconds for slope calculation 
@@ -73,7 +72,7 @@ for i in range(len(new_data)):
     temp_soilavg[i] = sum(new_data[i][:,3])/len(new_data[i][:,3])
     turfIDlist[i] = new_data[i][1,4]
     sitelist[i] = new_data[i] [1,9]
-    campaignlist[i] = new_data[i][1,5] # Destination site
+    campaignlist[i] = new_data[i][1,5] 
     # Original site (if it is a warming plot and is at lower elev. then move it up)
     if 'W' in str(new_data[i][:,4]):
         treatmentlist[i] = 'Warming'
@@ -92,46 +91,41 @@ for i in range(len(new_data)): # Flux for each FluxID
     # Converting flux per second to per hour (*3600) and micromol to mmol (1/1000); more typical
     fluxes[i] = (3600/1000)*(slopelist[i] * atm_p *(tube_vol + new_data[i][1,-2])/(R * temp_airavg[i] * new_data[i][1,7])) # f=slope*pressure*(tube volume + above-ground-collar volume)/(R*air temp*area)
     
-# Array for plotting: TurfID, fluxes, avg. soil temp and moisture
-plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object),sitelist.astype(object)])
+# Array for plotting: TurfID, fluxes, avg. soil temp, campaigns, treatments, sites and moisture
+plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object),sitelist.astype(object),np.zeros(len(sitelist))])
 plotarray = np.transpose(plotarray)
 
-#%% Moisture
-
-# TO DO NEXT
-#j = np.linspace(0,len(soilmoisture),(len(soilmoisture)//4),dtype=int)
-#soilmoisture.insert(6, "Avg_moisture",0)
-#soilmoisture ['destsiteID'] = np.where(metaturfID['turfID']==soilmoisture['turfID'], metaturfID['destsiteID'])
-#for i in range(len(soilmoisture)):
- #   if soilmoisture.iloc[i,0]
-avg_soilmoisture = [[81.48625, 33.50474684,6.82625 ],
-       [45.629375, 27.186875, 16.6125],
-       [48.838125, 38.0503125 , 17.4475],
-       [34.66375, 12.0246875,  4.795625]] # from soilmoistureanalysis, Lia/Joa/Vik
+#%% Moisture Time Series Analysis
+# Initializing
+avg_soilmoisture = np.array([[81.48625,33.50474684,6.82625 ],[45.629375, 27.186875, 16.6125],[48.838125, 38.0503125 , 17.4475],[34.66375, 12.0246875,  4.795625]]) # from soilmoistureanalysis, Lia/Joa/Vik
 campaigns = [1,2,3,4]
-for i in range(len(campaigns)): # fix this
+moisturesummary = np.zeros(len(plotarray))
+
+for i in range(1,len(campaigns)+1):
     for j in range(len(plotarray)):
-        if plotarray[i,3]==1 and plotarray [i,]
-
+        if plotarray[j,3]==i and plotarray [j,5]=='Lia':
+            moisturesummary[j]=avg_soilmoisture[i-1,0]
+        elif plotarray[j,3]==i and plotarray [j,5]=='Joa':
+            moisturesummary[j]=avg_soilmoisture[i-1,1]
+        elif plotarray[j,3]==i and plotarray [j,5]=='Vik':
+            moisturesummary[j]=avg_soilmoisture[i-1,2]
+            
+plotarray [:,6] = moisturesummary # filling the zeros with correct moisture values
+            
 #%% Statistics/outlier removal
-
-# #avgfluxes = sum(plotarray[:,1])/len(plotarray[:,1])
-# #avgfluxes1 = st.mean(plotarray[:,1])
 
 # Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
 plotarray_fit=np.delete(plotarray,(-5,51,10),0)
 plotarray_log = np.ndarray((61,5))
 plotarray_poly = np.zeros((61,5))
 tempsoilfix = 15
-#plotarray_log=np.delete(plotarray_log,51,0)
-#plotarray_log=np.delete(plotarray_log,10,0)
 
 m1, b1 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float), 1)
 m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
 m3, b3 = np.polyfit(plotarray_fit[:,2].astype(float), np.log(plotarray_fit[:,1].astype(float)), 1, w=np.sqrt(plotarray_fit[:,1].astype(float)))
 for i in range(len(plotarray_fit)):
     plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
-    plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) #Figure out polynomial regression
+    plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) # Check temperature correction
     
 #%% Plotting
 
@@ -153,40 +147,55 @@ for i in range(len(plotarray_fit)):
 # plt.xlabel('Soil Temperature (C)') 
 # plt.savefig('SoilRespiration_Trendline.png')
 
-# Exponential flux and soil temp, outliers removed, sca
-fig3=plt.figure('Flux vs. soil temperature, exponential with outlier removal')
+# Exponential fit for flux and soil temp, outliers removed.  
+fig3=plt.figure('Flux vs. soil temperature, exponential fit')
 plt.plot(plotarray_fit[:,2], plotarray_log[:,1], c = "red")
-plt.scatter(plotarray_fit[:,2], plotarray_poly[:,1], c = "blue")
+#plt.scatter(plotarray_fit[:,2], plotarray_poly[:,1], c = "blue") # Temperature corrected
 plt.scatter(plotarray_fit[:,2], plotarray_fit[:,1], c = "black", marker = ".") # Flux vs. soil temp
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Soil Temperature (C)')
 
-# By destination site
-fig4 = plt.figure('Soil Temperature and Carbon Dioxide Flux by dest site', figsize = (5,4))
-plt.scatter(plotarray[:,3], plotarray[:,1], edgecolors='none',c=plotarray[:,2],cmap='Reds')
-plt.colorbar()
+# By campaign
+fig4 = plt.figure('Flux over summer season (by campaign)', figsize = (5,4))
+plt.scatter(plotarray[:,3], plotarray[:,1], edgecolors='none',c=plotarray[:,2],cmap='viridis')
+plt.colorbar(label='Temperature (C)')
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Campaign') 
-plt.xticks([1,2,3,4])
-plt.savefig('SoilRespiration_campaign.png')
+plt.xticks(campaigns)
+plt.savefig('SoilRespiration_temp_campaign.png')
 
-# By original site
+# By treatment
 fig5 = plt.figure('Soil Temperature and Carbon Dioxide Flux by orig site', figsize = (5,4))
-plt.scatter(plotarray[:,4], plotarray[:,1], edgecolors='none',c=plotarray[:,2],cmap='Reds')
-plt.colorbar()
+plt.scatter(plotarray[:,4], plotarray[:,1], edgecolors='none',c=plotarray[:,2],cmap='viridis')
+plt.colorbar(label='Temperature (C)')
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Original Site')
 
 # Moisture
-fig6 = plt.figure('Temp. corrected flux vs. moisture', figsize = (5,4)) # NO I WANT TO PLOT LIA FLUX VS MOISTURE, JO FLUX VS MOISTURE, VIK FLUX VS MOISTURE
-for i in range(len(plotarray_fit)):
-    if plotarray_fit [i,5] == 'Lia':
-        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='red')
-    elif plotarray_fit [i,5] == 'Joa':
-        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='blue')
-    elif plotarray_fit [i,5] == 'Vik':
-        plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='green')
+fig6 = plt.figure('Temperature-corrected flux (15 C) vs. moisture', figsize = (5,4)) 
+plt.scatter(plotarray_fit[:,3], plotarray_poly[:,1], edgecolors='none',c=plotarray_fit[:,6],cmap='viridis')
+plt.colorbar(label="Soil Moisture (%)")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Campaign') 
-plt.xticks([1,2,3,4])
-plt.savefig('SoilRespiration_campaign.png')
+plt.xticks(campaigns)
+plt.savefig('SoilRespiration_moisture_campaign.png')
+
+# fig6 = plt.figure('Temp. corrected flux vs. moisture', figsize = (5,4)) 
+# for i in range(len(plotarray_fit)):
+#     if plotarray_fit [i,5] == 'Lia':
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='red')
+#     elif plotarray_fit [i,5] == 'Joa':
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='blue')
+#     elif plotarray_fit [i,5] == 'Vik':
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='green')
+# plt.ylabel('CO2 Flux (mmol/m2/h)')
+# plt.xlabel('Campaign') 
+# plt.xticks([1,2,3,4])
+# plt.savefig('SoilRespiration_campaign.png')
+
+fig7 = plt.figure('Temp. corrected flux vs. only moisture', figsize = (5,4)) 
+plt.scatter(plotarray_fit[:,6], plotarray_poly[:,1], c='red')
+plt.scatter(plotarray_fit[:,6], plotarray_fit[:,1], c = "blue") # Temperature corrected (15 C)
+plt.ylabel('CO2 Flux (mmol/m2/h)')
+plt.xlabel('Moisture (%)') 
+plt.savefig('SoilRespiration_moisture_campaign.png')
