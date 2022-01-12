@@ -86,26 +86,34 @@ for i in range(len(new_reddata)):
 orig_site = np.zeros(len(new_reddata)).astype(tuple)
 for i in range(len(new_reddata)):
     orig_site[i]=new_reddata[i][0][0]
-plotarray = np.vstack([treatment_list,orig_site.astype(tuple), k_r.astype(float), k_g.astype(float), S.astype(float)])
+plotarray = np.vstack([treatment_list,orig_site.astype(tuple), k_r.astype(float), S.astype(float)])
 plotarray = np.delete(plotarray,(1,8,10,15),1)
 plotarray = np.transpose(plotarray)
+
+
+
 #%%
 
 # S and k by treatment
 fig1=plt.figure('k by treatment',figsize=(5,4))
 for i in range(len(plotarray)):
-    if plotarray[i,0]=='A':
-        plt.scatter(plotarray[i,1], plotarray[i,2], marker='^',c = "red")
-        plt.scatter(plotarray[i,1], plotarray[i,3],marker='^', c = "green")
-    else:
-        plt.scatter(plotarray[i,1], plotarray[i,2], marker='o',c = "red")
-        plt.scatter(plotarray[:,1], plotarray[:,3],marker='o', c = "green")
+    if plotarray[i,0]=='A' and plotarray[i,1]=='Joa':
+        plt.scatter(plotarray[i,3], plotarray[i,2], marker='o',c = "blue")
+       # plt.scatter(plotarray[i,1], plotarray[i,3],marker='^', c = "green")
+    elif plotarray[i,0]=='W' and plotarray[i,1]=='Joa':
+        plt.scatter(plotarray[i,3], plotarray[i,2], marker='o',c = "red")
+       # plt.scatter(plotarray[:,1], plotarray[:,3],marker='o', c = "green")
+    elif plotarray[i,0]=='A' and plotarray[i,1]=='Lia':
+        plt.scatter(plotarray[i,3], plotarray[i,2], marker='^',c = "blue")
+       # plt.scatter(plotarray[i,1], plotarray[i,3],marker='^', c = "green")
+    elif plotarray[i,0]=='W' and plotarray[i,1]=='Lia':
+        plt.scatter(plotarray[i,3], plotarray[i,2], marker='^',c = "red")
 #plt.scatter(str(treatment_list), k_r, c = "red")
 #plt.scatter(tuple(treatment_list), k_g, c = "green")
 plt.ylabel('k (d^-1)')
-plt.xlabel('Site orig') 
+plt.xlabel('S') 
 #plt.yticks(np.linspace(0,100,10))
-plt.savefig('Soildecomposition_k_treatment.png')
+plt.savefig('Soildecomposition_k_S_treatment.png')
 
 fig2=plt.figure('S by treatment')
 plt.scatter(plotarray[:,0], plotarray[:,3].astype(float), c = "black")

@@ -57,6 +57,7 @@ turfIDlist=np.zeros(len(new_data),dtype = tuple) # TurfID array in suitable type
 campaignlist=np.zeros((len(new_data)),dtype = tuple) # 1,2,3,4: To be treated as a time series
 treatmentlist=np.zeros((len(new_data)),dtype = tuple) # Ambient or Warming
 sitelist=np.zeros((len(new_data)),dtype = tuple) # Destination SiteID
+origsitelist=np.zeros((len(new_data)),dtype = tuple) # Original [:,0] and destination [:,1] SiteID
 
 # Timestamp to elapsed seconds, temperature to Kelvin
 for i in range(len(new_data)): # Converting time to elapsed seconds for slope calculation 
@@ -73,11 +74,17 @@ for i in range(len(new_data)):
     turfIDlist[i] = new_data[i][1,4]
     sitelist[i] = new_data[i] [1,9]
     campaignlist[i] = new_data[i][1,5] 
-    # Original site (if it is a warming plot and is at lower elev. then move it up)
     if 'W' in str(new_data[i][:,4]):
-        treatmentlist[i] = 'Warming'
+        treatmentlist[i] = 'W'
     else:
-        treatmentlist[i] = 'Ambient'
+        treatmentlist[i] = 'A'
+    # Original site (if it is a warming plot and is at lower elev. then move it up)
+    if 'W' in str(new_data[i][:,4]) and new_data[i][1,-1] =='Vik':
+        origsitelist[i] = 'Joa'
+    elif 'W' in str(new_data[i][:,4]) and new_data[i][1,-1] =='Joa':
+        origsitelist[i] = 'Lia'
+    else: # In this case it is ambient, so dest=orig
+        origsitelist[i] = sitelist[i]    
         
 
 #%% Flux calculation
@@ -92,7 +99,7 @@ for i in range(len(new_data)): # Flux for each FluxID
     fluxes[i] = (3600/1000)*(slopelist[i] * atm_p *(tube_vol + new_data[i][1,-2])/(R * temp_airavg[i] * new_data[i][1,7])) # f=slope*pressure*(tube volume + above-ground-collar volume)/(R*air temp*area)
     
 # Array for plotting: TurfID, fluxes, avg. soil temp, campaigns, treatments, sites and moisture
-plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object),sitelist.astype(object),np.zeros(len(sitelist))])
+plotarray = np.vstack([turfIDlist.astype(object),fluxes.astype(float),temp_soilavg.astype(float),campaignlist.astype(object),treatmentlist.astype(object),sitelist.astype(object),origsitelist.astype(object),np.zeros(len(sitelist))])
 plotarray = np.transpose(plotarray)
 
 #%% Moisture Time Series Analysis
@@ -110,7 +117,7 @@ for i in range(1,len(campaigns)+1):
         elif plotarray[j,3]==i and plotarray [j,5]=='Vik':
             moisturesummary[j]=avg_soilmoisture[i-1,2]
             
-plotarray [:,6] = moisturesummary # filling the zeros with correct moisture values
+plotarray [:,7] = moisturesummary # filling the zeros with correct moisture values
             
 #%% Statistics/outlier removal
 
@@ -149,11 +156,21 @@ for i in range(len(plotarray_fit)):
 
 # Exponential fit for flux and soil temp, outliers removed.  
 fig3=plt.figure('Flux vs. soil temperature, exponential fit')
-plt.plot(plotarray_fit[:,2], plotarray_log[:,1], c = "red")
+plt.plot(plotarray_fit[:,2], plotarray_log[:,1], c = "black")
 #plt.scatter(plotarray_fit[:,2], plotarray_poly[:,1], c = "blue") # Temperature corrected
-plt.scatter(plotarray_fit[:,2], plotarray_fit[:,1], c = "black", marker = ".") # Flux vs. soil temp
+#plt.scatter(plotarray_fit[:,2], plotarray_fit[:,1], c = "black", marker = ".") # Flux vs. soil temp
+for i in range(len(plotarray_fit)):
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,2], plotarray[i,1], marker='o',c = "blue")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,2], plotarray[i,1], marker='o',c = "red")
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,2], plotarray[i,1], marker='^',c = "blue")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,2], plotarray[i,1], marker='^',c = "red")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Soil Temperature (C)')
+plt.legend()
 
 # By campaign
 fig4 = plt.figure('Flux over summer season (by campaign)', figsize = (5,4))
@@ -173,7 +190,7 @@ plt.xlabel('Original Site')
 
 # Moisture
 fig6 = plt.figure('Temperature-corrected flux (15 C) vs. moisture', figsize = (5,4)) 
-plt.scatter(plotarray_fit[:,3], plotarray_poly[:,1], edgecolors='none',c=plotarray_fit[:,6],cmap='viridis')
+plt.scatter(plotarray_fit[:,3], plotarray_poly[:,1], edgecolors='none',c=plotarray_fit[:,7],cmap='viridis')
 plt.colorbar(label="Soil Moisture (%)")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Campaign') 
@@ -193,9 +210,34 @@ plt.savefig('SoilRespiration_moisture_campaign.png')
 # plt.xticks([1,2,3,4])
 # plt.savefig('SoilRespiration_campaign.png')
 
-fig7 = plt.figure('Temp. corrected flux vs. only moisture', figsize = (5,4)) 
-plt.scatter(plotarray_fit[:,6], plotarray_poly[:,1], c='red')
-plt.scatter(plotarray_fit[:,6], plotarray_fit[:,1], c = "blue") # Temperature corrected (15 C)
+fig7 = plt.figure('Flux vs. Temperature', figsize = (5,4)) 
+for i in range(len(plotarray_fit)):
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,7], plotarray[i,1], marker='o',c = "blue", label ="Alpine Ambient")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,7], plotarray[i,1], marker='o',c = "red",label ="Alpine Warming")
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,7], plotarray[i,1], marker='^',c = "blue",label ="High Alpine Ambient")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,7], plotarray[i,1], marker='^',c = "red",label =" High Alpine Warming")
+# plt.scatter(plotarray_fit[:,7], plotarray_poly[:,1], c='red')
+# plt.scatter(plotarray_fit[:,7], plotarray_fit[:,1], c = "blue") # Temperature corrected (15 C)
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Moisture (%)') 
+#plt.legend(handles=[A,W])
 plt.savefig('SoilRespiration_moisture_campaign.png')
+
+fig8=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))
+for i in range(len(plotarray_fit)):
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "blue")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Joa':
+        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "red")
+        
+fig9=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))     
+for i in range(len(plotarray_fit)):
+    if plotarray[i,4]=='A' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "blue")
+    elif plotarray[i,4]=='W' and plotarray[i,6]=='Lia':
+        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "red")
+
