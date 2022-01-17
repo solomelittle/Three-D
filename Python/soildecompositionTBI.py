@@ -21,7 +21,13 @@ import math
 decompositiondata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/THREE-D_clean_decomposition_fall_2021.csv') # read csv with tea bag info
 Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux/summer_2021/Three-D_soilco2_2021.csv') # read csv with turfID and fluxID filtered for type SoilR
 metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/Three-D_metaturfID.csv')
+microclimate = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/THREE-D_clean_microclimate_2019-2021.csv', skiprows=1000,nrows=0)
 
+#%%
+#microclimate != microclimate.iloc[:1000,:]
+#Joa_avg_campaign_temp = 
+#Lia_avg_campaign_temp = 
+#%%
 m,n=np.shape(decompositiondata) # dimensions for easy sizing later arrays
 
 id_list = ['125 WN7C 183','126 AN7C 126','147 WN9C 194','149 AN9C 149','3 WN1C 85','4 AN1C 4','40 WN10N 119','41 WN7C 122',
@@ -82,6 +88,11 @@ a_r = H_r*(np.ones(len(new_reddata)) - S)
 for i in range(len(new_reddata)):
     k_r[i] = -np.log(a_r[i]*(new_reddata[i][0][-2]-(1-a_r[i])))/new_reddata[i][0][15]
     
+#%% Exponential decay model
+
+trange = np.linspace(0,90,90).astype(int)
+
+    
 #%% 
 orig_site = np.zeros(len(new_reddata)).astype(tuple)
 for i in range(len(new_reddata)):
@@ -123,4 +134,22 @@ plt.ylabel('S')
 plt.xlabel('Treatment') 
 #plt.yticks(np.linspace(0,100,10))
 plt.savefig('Soildecomposition_S_treatment.png')
+
+# import plotly.express as px
+# df = px.data.tips()
+# fig = px.box(plotarray, x=plotarray[:,2], y=plotarray[:,3])
+# fig.show()
+expmodel_g= np.array([16,90])
+expmodel_r= np.array([16,90])
+
+for i in range(len(k_g)):
+    expmodel_g[i] = a_g[i]*math.exp(-k_g[i]*trange) + (1-a_g[i])
+    expmodel_r[i] = a_r[i]*math.exp(-k_r*trange) + (1-a_r[i])
+
+plt.plot(trange, expmodel_g, 'r')
+plt.xlabel("T in kelvin")
+plt.ylabel("Ratio")
+plt.title("Exercise 4.3")
+
+plt.show()
 

@@ -124,14 +124,14 @@ plotarray [:,7] = moisturesummary # filling the zeros with correct moisture valu
 # Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
 plotarray_fit=np.delete(plotarray,(-5,51,10),0)
 plotarray_log = np.ndarray((61,5))
-plotarray_poly = np.zeros((61,5))
+plotarray_poly = np.zeros((64,5)) #Need to fix! this is 63 in length
 tempsoilfix = 15
 
 m1, b1 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float), 1)
 m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
 m3, b3 = np.polyfit(plotarray_fit[:,2].astype(float), np.log(plotarray_fit[:,1].astype(float)), 1, w=np.sqrt(plotarray_fit[:,1].astype(float)))
-for i in range(len(plotarray_fit)):
-    plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
+for i in range(len(plotarray_poly)):
+    #plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
     plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) # Check temperature correction
     
 #%% Plotting
@@ -225,7 +225,7 @@ for i in range(len(plotarray_fit)):
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Moisture (%)') 
 #plt.legend(handles=[A,W])
-plt.savefig('SoilRespiration_moisture_campaign.png')
+plt.savefig('SoilRespiration_temp_moisture_summary.png')
 
 fig8=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))
 for i in range(len(plotarray_fit)):
@@ -233,11 +233,19 @@ for i in range(len(plotarray_fit)):
         plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "blue")
     elif plotarray[i,4]=='W' and plotarray[i,6]=='Joa':
         plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "red")
+plt.ylabel('CO2 Flux (mmol/m2/h)')
+plt.xlabel('Moisture (%)') 
+#plt.legend(handles=[A,W])
+plt.savefig('SoilRespiration_temp_moisture_Joa.png')
         
-fig9=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))     
+fig9=plt.figure('Temp-corrected Joa Flux vs Moisture',figsize=(5,4))     
 for i in range(len(plotarray_fit)):
     if plotarray[i,4]=='A' and plotarray[i,6]=='Lia':
         plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "blue")
     elif plotarray[i,4]=='W' and plotarray[i,6]=='Lia':
         plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "red")
+plt.ylabel('CO2 Flux (mmol/m2/h)')
+plt.xlabel('Moisture (%)') 
+#plt.legend(handles=[A,W])
+plt.savefig('SoilRespiration_temp_moisture_Lia.png')
 
