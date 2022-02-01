@@ -124,14 +124,27 @@ plotarray [:,7] = moisturesummary # filling the zeros with correct moisture valu
 # Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
 plotarray_fit=np.delete(plotarray,(-5,51,10),0)
 plotarray_log = np.ndarray((61,5))
-plotarray_poly = np.zeros((64,5)) #Need to fix! this is 63 in length
+plotarray_poly = np.zeros((61,5)) #Need to fix! this is 63 in length
+w_array = np.zeros((61,2))
+a_array = np.zeros((61,2))
 tempsoilfix = 15
 
 m1, b1 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float), 1)
-m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
+
+for i in range(len(plotarray_fit)):   
+    if plotarray_fit[i,4] == 'W':
+        w_array [i,:] = plotarray_fit[i,1:3]
+    else:
+        a_array[i,:] = plotarray_fit[i,1:3]
+        
+        
+m2w,b2w,c2w = np.polyfit(w_array[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
+m2a,b2a,c2a = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
+
+#m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
 m3, b3 = np.polyfit(plotarray_fit[:,2].astype(float), np.log(plotarray_fit[:,1].astype(float)), 1, w=np.sqrt(plotarray_fit[:,1].astype(float)))
 for i in range(len(plotarray_poly)):
-    #plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
+    plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
     plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) # Check temperature correction
     
 #%% Plotting
