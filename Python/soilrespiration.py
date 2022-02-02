@@ -122,11 +122,16 @@ plotarray [:,7] = moisturesummary # filling the zeros with correct moisture valu
 #%% Statistics/outlier removal
 
 # Removing "outlier" fluxes only for the calculation of the exponential fit, 10 is negative, 51 and -4 are just very large
-plotarray_fit=np.delete(plotarray,(-5,51,10),0)
-plotarray_log = np.ndarray((61,5))
-plotarray_poly = np.zeros((61,5)) #Need to fix! this is 63 in length
-w_array = np.zeros((61,2))
-a_array = np.zeros((61,2))
+plotarray_fit=np.delete(plotarray,(-5),0)
+#plotarray[(-5,51,10),1] = np.empty
+#plotarray_fit = plotarray
+#plotarray_fit=np.isfinite(plotarray)
+plotarray_log = np.ndarray((63,5))
+plotarray_poly = np.zeros((63,5)) #Need to fix! this is 63 in length
+plotarray_polyw = np.zeros((63,5)) #Need to fix! this is 63 in length
+plotarray_polya = np.zeros((63,5)) #Need to fix! this is 63 in length
+w_array = np.zeros((63,2))
+a_array = np.zeros((63,2))
 tempsoilfix = 15
 
 m1, b1 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float), 1)
@@ -136,17 +141,25 @@ for i in range(len(plotarray_fit)):
         w_array [i,:] = plotarray_fit[i,1:3]
     else:
         a_array[i,:] = plotarray_fit[i,1:3]
-        
-        
-m2w,b2w,c2w = np.polyfit(w_array[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
-m2a,b2a,c2a = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
 
-#m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
+w_array = np.delete(w_array, np.argwhere(w_array ==0),0)
+a_array = np.delete(a_array, np.argwhere(a_array ==0),0)
+#w_array = w_array[w_array !=0]
+#a_array = a_array[a_array !=0]
+        
+m2w,b2w,c2w = np.polyfit(w_array[:,1].astype(float), w_array[:,0].astype(float),2)
+m2a,b2a,c2a = np.polyfit(a_array[:,1].astype(float), a_array[:,0].astype(float),2)
+
+m2,b2,c2 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(float),2)
 m3, b3 = np.polyfit(plotarray_fit[:,2].astype(float), np.log(plotarray_fit[:,1].astype(float)), 1, w=np.sqrt(plotarray_fit[:,1].astype(float)))
 for i in range(len(plotarray_poly)):
     plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
-    plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) # Check temperature correction
-    
+    #plotarray_poly[i,1] = plotarray[i,1]+m2*(tempsoilfix**2-plotarray[i,2]**2)+b2*(tempsoilfix-plotarray[i,2]) # Check temperature correction
+    if plotarray_fit[i,4] == 'W':
+        plotarray_poly[i,1] = plotarray_fit[i,1]+m2w*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2w*(tempsoilfix-plotarray_fit[i,2]) # 
+    else:
+        plotarray_poly[i,1] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
+    #plotarray_polya[i,1] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
 #%% Plotting
 
 # Flux for each 4 points of TurfID coloured by temp. could separate into lia joa and vik
@@ -203,7 +216,7 @@ plt.xlabel('Original Site')
 
 # Moisture
 fig6 = plt.figure('Temperature-corrected flux (15 C) vs. moisture', figsize = (5,4)) 
-plt.scatter(plotarray_fit[:,3], plotarray_poly[:,1], edgecolors='none',c=plotarray_fit[:,7],cmap='viridis')
+plt.scatter(plotarray_fit[:,3], plotarray_polyw[:,1], edgecolors='none',c=plotarray_fit[:,7],cmap='viridis')
 plt.colorbar(label="Soil Moisture (%)")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Campaign') 
@@ -240,23 +253,23 @@ plt.xlabel('Moisture (%)')
 #plt.legend(handles=[A,W])
 plt.savefig('SoilRespiration_temp_moisture_summary.png')
 
-fig8=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))
+fig8=plt.figure('Temp-corrected Joa Flux vs Moisture',figsize=(5,4))
 for i in range(len(plotarray_fit)):
     if plotarray[i,4]=='A' and plotarray[i,6]=='Joa':
-        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "blue")
+        plt.scatter(plotarray_fit[i,7], plotarray_polya[i,1], marker='o',c = "blue")
     elif plotarray[i,4]=='W' and plotarray[i,6]=='Joa':
-        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='o',c = "red")
+        plt.scatter(plotarray_fit[i,7], plotarray_polyw[i,1], marker='o',c = "red")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Moisture (%)') 
 #plt.legend(handles=[A,W])
 plt.savefig('SoilRespiration_temp_moisture_Joa.png')
         
-fig9=plt.figure('Temp-corrected Joa Flux vs Moisture',figsize=(5,4))     
+fig9=plt.figure('Temp-corrected Lia Flux vs Moisture',figsize=(5,4))     
 for i in range(len(plotarray_fit)):
     if plotarray[i,4]=='A' and plotarray[i,6]=='Lia':
-        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "blue")
+        plt.scatter(plotarray_fit[i,7], plotarray_polya[i,1], marker='^',c = "blue")
     elif plotarray[i,4]=='W' and plotarray[i,6]=='Lia':
-        plt.scatter(plotarray_fit[i,7], plotarray_poly[i,1], marker='^',c = "red")
+        plt.scatter(plotarray_fit[i,7], plotarray_polyw[i,1], marker='^',c = "red")
 plt.ylabel('CO2 Flux (mmol/m2/h)')
 plt.xlabel('Moisture (%)') 
 #plt.legend(handles=[A,W])
