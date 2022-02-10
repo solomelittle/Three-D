@@ -13,7 +13,6 @@ Created on Wed Jan  5 03:24:59 2022
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import scipy.stats as st
 import math
 
 #%% Reading csv and initializing
@@ -23,10 +22,6 @@ Rfielddata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/c-flux
 metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/Three-D_metaturfID.csv')
 microclimate = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/THREE-D_clean_microclimate_2019-2021.csv', skiprows=1000,nrows=0)
 
-#%%
-#microclimate != microclimate.iloc[:1000,:]
-#Joa_avg_campaign_temp = 
-#Lia_avg_campaign_temp = 
 #%%
 m,n=np.shape(decompositiondata) # dimensions for easy sizing later arrays
 
@@ -47,6 +42,7 @@ for i in range(m): # Looping over each data point
             new_greendata[j].append(current_point)
         elif current_point["turfID"] == id_list[j] and current_point["tea_type"]=='red': # same but for red
             new_reddata[j].append(current_point)
+            
 # Filling empty entries with marker for missing data          
 new_reddata[1].append(NaN_bags) 
 new_reddata[15].append(NaN_bags)
@@ -101,9 +97,8 @@ plotarray = np.vstack([treatment_list,orig_site.astype(tuple), k_r.astype(float)
 plotarray = np.delete(plotarray,(1,8,10,15),1)
 plotarray = np.transpose(plotarray)
 
-
-
 #%%
+# Plotting the data here, final styling was done in Excel after all for this one.
 
 # S and k by treatment
 fig1=plt.figure('k by treatment',figsize=(5,4))
@@ -135,21 +130,4 @@ plt.xlabel('Treatment')
 #plt.yticks(np.linspace(0,100,10))
 plt.savefig('Soildecomposition_S_treatment.png')
 
-# import plotly.express as px
-# df = px.data.tips()
-# fig = px.box(plotarray, x=plotarray[:,2], y=plotarray[:,3])
-# fig.show()
-expmodel_g= np.array([16,90])
-expmodel_r= np.array([16,90])
-
-for i in range(len(k_g)):
-    expmodel_g[i] = a_g[i]*math.exp(-k_g[i]*trange) + (1-a_g[i])
-    expmodel_r[i] = a_r[i]*math.exp(-k_r*trange) + (1-a_r[i])
-
-plt.plot(trange, expmodel_g, 'r')
-plt.xlabel("T in kelvin")
-plt.ylabel("Ratio")
-plt.title("Exercise 4.3")
-
-plt.show()
 

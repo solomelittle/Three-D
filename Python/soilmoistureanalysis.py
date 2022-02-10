@@ -10,8 +10,8 @@ Created on Sat Jan  8 21:41:01 2022
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import scipy.stats as st
-import math
+
+#%% Read csv 
 
 soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
 metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/Three-D_metaturfID.csv')
@@ -28,7 +28,8 @@ for i in range(len(soilmoisture)): # Looping over each data point
             soilmoisture.iloc[i,7] = metaturfID.iloc[j,2]
           
             
-#%%
+
+#%% Soil Moisture Statistics
         
 nr = [1,2,3,4]
 campaigns=np.zeros((4,3))
@@ -38,7 +39,9 @@ Vik_m = np.zeros((4,(len(soilmoisture))))
 stdL = np.zeros(4)
 stdJ = np.zeros(4)
 stdV = np.zeros(4)
-# need to do per campaign average, not total
+
+# Calculating averages and standard deviations for error bars
+
 def site_avg(c, soilmoisture):
     sum_moisture_Lia=0
     L=0
@@ -65,7 +68,7 @@ def site_avg(c, soilmoisture):
     avg_moisture = [(sum_moisture_Lia/L),(sum_moisture_Joa/J),(sum_moisture_Vik/V)]
     Vik_moist=Vik
     Joa_moist=Joa
-    Lia_moist=Lia#[Lia !=0]
+    Lia_moist=Lia
 
     return avg_moisture, Lia_moist, Joa_moist, Vik_moist
 
@@ -77,11 +80,8 @@ for i in range(1,len(campaigns)+1):
     stdJ[i-1]=np.nanstd(np.where(np.isclose(Joa_m[i-1,:],0), np.nan, Joa_m[i-1,:]))
     Vik_m[i-1,:] = site_avg(i,soilmoisture)[3]
     stdV[i-1]=np.nanstd(np.where(np.isclose(Vik_m[i-1,:],0), np.nan, Vik_m[i-1,:]))
-#avg_moisture_Joa=sum_moisture_Joa/J
-#avg_moisture_Vik=sum_moisture_Vik/V
-#np.nanstd(np.where(np.isclose(Lia_m,0), np.nan, Lia_m))
-#np.nanstd(np.where(np.isclose(a,0), np.nan, a))
-#np.nanstd(np.where(np.isclose(a,0), np.nan, a))
+    
+#%% Plotting
 
 fig1 = plt.figure('Moisture', figsize = (5,4))
 plt.scatter(nr, campaigns[:,0],c='red') # LIa
