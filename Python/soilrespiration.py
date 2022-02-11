@@ -124,12 +124,12 @@ plotarray [:,7] = moisturesummary # filling the zeros with correct moisture valu
 # Removing "outlier" negative flux which drives polyfit to otherwise not converge...
 plotarray_fit=np.delete(plotarray,(-5),0)
 plotarray_log = np.ndarray((63,5))
-plotarray_poly = np.zeros((63,5)) 
-plotarray_polyw = np.zeros((63,5))
-plotarray_polya = np.zeros((63,5)) 
-plotarray_poly_moist = np.zeros((63,5)) 
-w_array = np.zeros((63,2))
-a_array = np.zeros((63,2))
+plotarray_poly = np.zeros((63)) 
+plotarray_polyw = np.zeros((63,4))
+plotarray_polya = np.zeros((63,4)) 
+plotarray_poly_moist = np.zeros((63)) 
+w_array = np.zeros((63,4))
+a_array = np.zeros((63,4))
 tempsoilfix = 15
 moistsoilfix = 30
 
@@ -138,9 +138,9 @@ m1,b1 = np.polyfit(plotarray_fit[:,2].astype(float), plotarray_fit[:,1].astype(f
 
 for i in range(len(plotarray_fit)):   
     if plotarray_fit[i,4] == 'W':
-        w_array [i,:] = plotarray_fit[i,1:3] # warmed fluxes, avg. soil temp and campaign
+        w_array [i,:] = plotarray_fit[i,[1,2,3,7]] # warmed fluxes, avg. soil temp and campaign
     else:
-        a_array[i,:] = plotarray_fit[i,1:3] # warmed fluxes, avg. soil temp and campaign
+        a_array[i,:] = plotarray_fit[i,[1,2,3,7]] # warmed fluxes, avg. soil temp and campaign
 
 w_array = np.delete(w_array, np.argwhere(w_array ==0),0) # removing empty entries
 a_array = np.delete(a_array, np.argwhere(a_array ==0),0) # removing empty entries
@@ -148,16 +148,19 @@ a_array = np.delete(a_array, np.argwhere(a_array ==0),0) # removing empty entrie
 m2w,b2w,c2w = np.polyfit(w_array[:,1].astype(float), w_array[:,0].astype(float),2) # 2nd degree polynomial fit for flux and temperature
 m2a,b2a,c2a = np.polyfit(a_array[:,1].astype(float), a_array[:,0].astype(float),2) # 2nd degree polynomial fit for flux and temperature
 
+m2w_m,b2w_m,c2w_m = np.polyfit(w_array[:,3].astype(float), w_array[:,0].astype(float),2) # 2nd degree polynomial fit for flux and temperature
+m2a_m,b2a_m,c2a_m = np.polyfit(a_array[:,3].astype(float), a_array[:,0].astype(float),2) # 2nd degree polynomial fit for flux and temperature
+
 m3,b3 = np.polyfit(plotarray_fit[:,2].astype(float), np.log(plotarray_fit[:,1].astype(float)), 1, w=np.sqrt(plotarray_fit[:,1].astype(float))) # Exponential fit, just to test how that looks since decomposition is assumed to occur as exponential decay
 
 for i in range(len(plotarray_poly)):
     plotarray_log[i,1]=math.exp(m3*plotarray_fit[i,2]+b3)
     if plotarray_fit[i,4] == 'W':
-        plotarray_poly[i,1] = plotarray_fit[i,1]+m2w*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2w*(tempsoilfix-plotarray_fit[i,2]) # 
-        plotarray_poly_moist[i,1] = plotarray_fit[i,1]+m2w*(moistsoilfix**2-plotarray_fit[i,7]**2)+b2w*(moistsoilfix-plotarray_fit[i,7]) # 
+        plotarray_poly[i] = plotarray_fit[i,1]+m2w*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2w*(tempsoilfix-plotarray_fit[i,2]) # 
+        plotarray_poly_moist[i] = plotarray_fit[i,1]+m2w_m*(moistsoilfix**2-plotarray_fit[i,7]**2)+b2w_m*(moistsoilfix-plotarray_fit[i,7]) # 
     else:
-        plotarray_poly[i,1] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
-        plotarray_poly_moist[i,1] = plotarray_fit[i,1]+m2w*(moistsoilfix**2-plotarray_fit[i,7]**2)+b2w*(moistsoilfix-plotarray_fit[i,7]) # 
+        plotarray_poly[i] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
+        plotarray_poly_moist[i] = plotarray_fit[i,1]+m2w_m*(moistsoilfix**2-plotarray_fit[i,7]**2)+b2w_m*(moistsoilfix-plotarray_fit[i,7]) # 
         #TO DO CREATE PLOTARRAY FOR FIXED MOISTURE!!
     #plotarray_polya[i,1] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
 #%% Plotting
@@ -183,7 +186,7 @@ for i in range(len(plotarray_poly)):
 # # Exponential fit for flux and soil temp, outliers removed.  
 # fig3=plt.figure('Flux vs. soil temperature, exponential fit')
 # plt.plot(plotarray_fit[:,2], plotarray_log[:,1], c = "black")
-# #plt.scatter(plotarray_fit[:,2], plotarray_poly[:,1], c = "blue") # Temperature corrected
+# #plt.scatter(plotarray_fit[:,2], plotarray_poly[:], c = "blue") # Temperature corrected
 # #plt.scatter(plotarray_fit[:,2], plotarray_fit[:,1], c = "black", marker = ".") # Flux vs. soil temp
 # for i in range(len(plotarray_fit)):
 #     if plotarray[i,4]=='A' and plotarray[i,6]=='Joa':
@@ -226,11 +229,11 @@ for i in range(len(plotarray_poly)):
 # fig6 = plt.figure('Temp. corrected flux vs. moisture', figsize = (5,4)) 
 # for i in range(len(plotarray_fit)):
 #     if plotarray_fit [i,5] == 'Lia':
-#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='red')
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i], c='red')
 #     elif plotarray_fit [i,5] == 'Joa':
-#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='blue')
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i], c='blue')
 #     elif plotarray_fit [i,5] == 'Vik':
-#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i,1], c='green')
+#         plt.scatter(plotarray_fit[i,3], plotarray_poly[i], c='green')
 # plt.ylabel('CO2 Flux (mmol/m2/h)')
 # plt.xlabel('Campaign') 
 # plt.xticks([1,2,3,4])

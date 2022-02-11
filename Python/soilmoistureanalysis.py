@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 soilmoisture = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data_cleaned/Three-D_soil-moisture_2021.csv')
 metaturfID = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/Three-D_metaturfID.csv')
+climatedata = pd.read_csv('/Users/emmalittle/Documents/GitHub/Three-D/data/THREE_D_Gridded_MonthlyClimate_2009-2019.csv')
 
 #for i in range(len(soilmoisture)):
 soilmoisture.insert(6, "Site",0)
@@ -27,6 +28,30 @@ for i in range(len(soilmoisture)): # Looping over each data point
             soilmoisture.iloc[i,6] = metaturfID.iloc[j,6]
             soilmoisture.iloc[i,7] = metaturfID.iloc[j,2]
           
+#%%  Location climates: helpful for report, not relevant for soil moisture analysis
+
+Viktemp = np.zeros(len(climatedata),2)
+Joatemp = np.zeros(len(climatedata),2)
+Liatemp = np.zeros(len(climatedata),2)
+
+for i in range (len(climatedata)):
+    if climatedata.iloc[i,5] == 'temperature' :
+        if climatedata.iloc[i,0]=='Vik':
+            Viktemp[i,0] = climatedata.iloc[i,6]
+        elif climatedata.iloc[i,0]=='Joa':
+            Joatemp[i,0] = climatedata.iloc[i,6]
+        elif climatedata.iloc[i,0]=='Lia':
+            Liatemp[i,0] = climatedata.iloc[i,6]      
+    if climatedata.iloc[i,5] == 'precipiation' :
+        if climatedata.iloc[i,0]=='Vik':
+            Viktemp[i,1] = climatedata.iloc[i,6]
+        elif climatedata.iloc[i,0]=='Joa':
+            Joatemp[i,1] = climatedata.iloc[i,6]
+        elif climatedata.iloc[i,0]=='Lia':
+            Liatemp[i,1] = climatedata.iloc[i,6]            
+Viktemp[ = np.delete(a_array, np.argwhere(a_array ==0),0) # removing empty entries
+
+
             
 
 #%% Soil Moisture Statistics
