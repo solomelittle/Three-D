@@ -30,29 +30,46 @@ for i in range(len(soilmoisture)): # Looping over each data point
           
 #%%  Location climates: helpful for report, not relevant for soil moisture analysis
 
-Viktemp = np.zeros(len(climatedata),2)
-Joatemp = np.zeros(len(climatedata),2)
-Liatemp = np.zeros(len(climatedata),2)
+Vikclim = np.zeros((len(climatedata),2))
+Joaclim = np.zeros((len(climatedata),2))
+Liaclim = np.zeros((len(climatedata),2))
 
 for i in range (len(climatedata)):
     if climatedata.iloc[i,5] == 'temperature' :
         if climatedata.iloc[i,0]=='Vik':
-            Viktemp[i,0] = climatedata.iloc[i,6]
+            Vikclim[i,0] = climatedata.iloc[i,6]
         elif climatedata.iloc[i,0]=='Joa':
-            Joatemp[i,0] = climatedata.iloc[i,6]
+            Joaclim[i,0] = climatedata.iloc[i,6]
         elif climatedata.iloc[i,0]=='Lia':
-            Liatemp[i,0] = climatedata.iloc[i,6]      
-    if climatedata.iloc[i,5] == 'precipiation' :
+            Liaclim[i,0] = climatedata.iloc[i,6]      
+    if climatedata.iloc[i,5] == 'precipitation' :
         if climatedata.iloc[i,0]=='Vik':
-            Viktemp[i,1] = climatedata.iloc[i,6]
+            Vikclim[i,1] = climatedata.iloc[i,6]
         elif climatedata.iloc[i,0]=='Joa':
-            Joatemp[i,1] = climatedata.iloc[i,6]
+            Joaclim[i,1] = climatedata.iloc[i,6]
         elif climatedata.iloc[i,0]=='Lia':
-            Liatemp[i,1] = climatedata.iloc[i,6]            
-Viktemp[ = np.delete(a_array, np.argwhere(a_array ==0),0) # removing empty entries
+            Liaclim[i,1] = climatedata.iloc[i,6]            
+#Viktemp = np.delete(Viktemp, np.argwhere(Viktemp ==0),0) # removing empty entries
+#Joatemp = np.delete(Joatemp, np.argwhere(Joatemp ==0),0) # removing empty entries
+#Liatemp = np.delete(Liatemp, np.argwhere(Liatemp ==0),0) # removing empty entries
+Vikclim[Vikclim == 0] = np.nan
+Joaclim[Joaclim == 0] = np.nan
+Liaclim[Liaclim == 0] = np.nan
 
+Vikavg = np.nanmean(Vikclim, axis=0)
+#Vikstd = np.nanstd(Vikclim, axis = 0)
+Vikavg[1] = 365.24*Vikavg[1]
+#Vikstd[1] = 365.24*Vikstd[1]
 
-            
+Joaavg = np.nanmean(Joaclim, axis=0) 
+#Joastd = np.nanstd(Joaclim, axis = 0)
+Joaavg[1] = 365.24*Joaavg[1]
+#Joastd[1] = 365.24*Joastd[1]
+
+Liaavg = np.nanmean(Liaclim, axis=0)
+#Liastd = np.nanstd(Liaclim, axis = 0)
+Liaavg[1] = 365.24*Liaavg[1]
+#Liastd[1] = 365.24*Liastd[1]
 
 #%% Soil Moisture Statistics
         
