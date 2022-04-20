@@ -161,7 +161,7 @@ for i in range(len(plotarray_poly)):
     else:
         plotarray_poly[i] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
         plotarray_poly_moist[i] = plotarray_fit[i,1]+m2w_m*(moistsoilfix**2-plotarray_fit[i,7]**2)+b2w_m*(moistsoilfix-plotarray_fit[i,7]) # 
-        #TO DO CREATE PLOTARRAY FOR FIXED MOISTURE!!
+
     #plotarray_polya[i,1] = plotarray_fit[i,1]+m2a*(tempsoilfix**2-plotarray_fit[i,2]**2)+b2a*(tempsoilfix-plotarray_fit[i,2]) # 
 #%% Plotting
 
@@ -278,22 +278,34 @@ for i in range(len(plotarray_poly)):
 # #plt.legend(handles=[A,W])
 # plt.savefig('SoilRespiration_temp_moisture_Lia.png')
 
-ax = plt.axes(projection='3d')
-#ax = plt.axes(projection='3d')
-#ax.scatter(x, y, z, c=z, cmap='viridis', linewidth=0.5);
-ax.scatter3D(plotarray_fit[:,7], plotarray_fit[:,2], plotarray_fit[:,1], c=plotarray_fit[:,1], cmap='viridis', linewidth=0.5)
-ax.set_ylabel('Soil Temperature (C)')
-ax.set_xlabel('Soil Moisture (%)')
-ax.set_zlabel('CO2 Flux (mmol/m2/h)')
-# Get rid of colored axes planes
-# First remove fill
-ax.xaxis.pane.fill = False
-ax.yaxis.pane.fill = False
-ax.zaxis.pane.fill = False
 
-# Now set color to white (or whatever is "invisible")
-ax.xaxis.pane.set_edgecolor('w')
-ax.yaxis.pane.set_edgecolor('w')
-ax.zaxis.pane.set_edgecolor('w')
+# ax = plt.axes(projection='3d')
+# #ax = plt.axes(projection='3d')
+# #ax.scatter(x, y, z, c=z, cmap='viridis', linewidth=0.5);
+# ax.scatter3D(plotarray_fit[:,7], plotarray_fit[:,2], plotarray_fit[:,1], c=plotarray_fit[:,1], cmap='viridis', linewidth=0.5)
+# ax.set_ylabel('Soil Temperature (C)')
+# ax.set_xlabel('Soil Moisture (%)')
+# ax.set_zlabel('CO2 Flux (mmol/m2/h)')
+# # Get rid of colored axes planes
+# # First remove fill
+# ax.xaxis.pane.fill = False
+# ax.yaxis.pane.fill = False
+# ax.zaxis.pane.fill = False
 
-#plt.show()
+# ax.plot(plotarray_fit[:,7], plotarray_fit[:,1], 'r+', zdir='y', zs=25)
+# ax.plot(plotarray_fit[:,2], plotarray_fit[:,1], 'g+', zdir='x', zs=0)
+# ax.plot(plotarray_fit[:,7], plotarray_fit[:,2], 'k+', zdir='z', zs=30)
+
+# # Now set color to white (or whatever is "invisible")
+# ax.xaxis.pane.set_edgecolor('w')
+# ax.yaxis.pane.set_edgecolor('w')
+# ax.zaxis.pane.set_edgecolor('w')
+
+# #plt.show()
+
+# Final colour plot
+fig5 = plt.figure('Soil Temperature and Carbon Dioxide Flux by orig site', figsize = (5,4))
+plt.scatter(plotarray_fit[:,7], plotarray_fit[:,2], edgecolors='none',c=plotarray_fit[:,1],cmap='viridis')
+plt.colorbar(label='Carbon Dioxide Flux (mmol/m2/h)')
+plt.ylabel('Temperature (C)')
+plt.xlabel('Soil Moisture (%)')
